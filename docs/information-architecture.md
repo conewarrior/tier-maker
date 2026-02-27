@@ -1,6 +1,21 @@
-# Information Architecture - Tier Maker
+# Information Architecture - sisiduck
 
-## 1. 콘텐츠 계층 구조
+## 1. 플랫폼 구조
+
+```
+sisiduck.com (플랫폼)
+│   재미있는 콘텐츠를 모아놓는 플랫폼
+│   향후 이상형월드컵, 퀴즈, 미니게임 등 확장 가능
+│
+└── 티어메이커 (첫 번째 기능, v1)
+    │
+    └── 이하 IA 참조
+```
+
+- SEO 타이틀: `티어표 만들기, 티어 랭킹 - 시시덕`
+- 도메인: `sisiduck.com`
+
+## 2. 티어메이커 콘텐츠 계층
 
 ```
 대분류 카테고리 (관리자 고정)
@@ -30,39 +45,44 @@
                 - 한 토픽에 여러 사용자의 티어리스트가 쌓임
 ```
 
-## 2. 글로벌 레이아웃
+## 3. 글로벌 레이아웃
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Logo        │  🔍 검색...              │ [+ 토픽 만들기] [로그인] │
-├──────────────┼──────────────────────────────────────────┤
-│  사이드바      │                                          │
-│              │  메인 콘텐츠 영역                           │
-│  만화/애니 ▾  │                                          │
-│    원피스     │                                          │
-│    나루토     │                                          │
-│  게임 ▾      │                                          │
-│    LoL       │                                          │
-│    발로란트   │                                          │
-│  영화 ▾      │                                          │
-│  음식 ▾      │                                          │
-│  ...         │                                          │
-└──────────────┴──────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  🦆 sisiduck   │  🔍 검색...              │ [+ 토픽 만들기] [로그인] │
+├────────────────┼─────────────────────────────────────────────┤
+│  사이드바        │                                             │
+│                │  메인 콘텐츠 영역                              │
+│  만화/애니 ▾    │                                             │
+│    원피스       │                                             │
+│    나루토       │                                             │
+│  게임 ▾        │                                             │
+│    LoL         │                                             │
+│    발로란트     │                                             │
+│  영화 ▾        │                                             │
+│  음식 ▾        │                                             │
+│  ...           │                                             │
+└────────────────┴─────────────────────────────────────────────┘
 ```
 
 - **탑 내비**: 로고(좌), 검색창(중앙), 토픽 만들기 + 로그인(우)
 - **사이드바**: 대분류 > 소분류 아코디언. 항상 노출
 - **메인 콘텐츠**: 현재 페이지에 따라 변경
 
-## 3. 페이지 구조 & URL
+## 4. 페이지 구조 & URL
 
-### 홈
+### 홈 (플랫폼 랜딩)
 - **URL**: `/`
+- **내용**: 시시덕 소개, 티어메이커 바로가기, 인기 콘텐츠 하이라이트
+- **목적**: 플랫폼 진입점. 향후 다른 기능 추가 시 통합 랜딩
+
+### 티어메이커 홈
+- **URL**: `/tier`
 - **내용**: 카테고리 그리드 + 인기 토픽 + 최근 생성 토픽
-- **목적**: 카테고리 탐색 진입점
+- **목적**: 티어메이커 카테고리 탐색 진입점
 
 ### 소분류 페이지
-- **URL**: `/{대분류}/{소분류}` (예: `/manga/one-piece`)
+- **URL**: `/tier/{대분류}/{소분류}` (예: `/tier/manga/one-piece`)
 - **내용**:
   - 공유 아이템 풀 미리보기
   - 소속 토픽 목록 (인기순/최신순 정렬)
@@ -70,7 +90,7 @@
   - [아이템 추가/편집] 버튼 (로그인 시)
 
 ### 토픽 상세 페이지
-- **URL**: `/{대분류}/{소분류}/{토픽-slug}`
+- **URL**: `/tier/{대분류}/{소분류}/{토픽-slug}`
 - **내용**:
   - 토픽 제목 & 설명
   - 아이템 목록 (이 토픽에 선택된 아이템들)
@@ -80,7 +100,7 @@
     - 좋아요 수, 작성자, 작성 시간
 
 ### 티어 만들기 (에디터)
-- **URL**: `/{대분류}/{소분류}/{토픽-slug}/create`
+- **URL**: `/tier/{대분류}/{소분류}/{토픽-slug}/create`
 - **내용**:
   - S/A/B/C/D/F 티어 행 (추가/삭제/이름 변경/색상 변경 가능)
   - 미배치 아이템 영역
@@ -89,7 +109,7 @@
   - [이미지로 내보내기]
 
 ### 티어리스트 상세 페이지
-- **URL**: `/{대분류}/{소분류}/{토픽-slug}/tier/{tier-id}`
+- **URL**: `/tier/{대분류}/{소분류}/{토픽-slug}/{tier-id}`
 - **내용**:
   - 완성된 티어 배치 보기
   - 작성자 정보
@@ -97,7 +117,7 @@
   - 공유 (URL, 이미지 다운로드)
 
 ### 토픽 만들기
-- **URL**: `/create`
+- **URL**: `/tier/create`
 - **내용**:
   - 대분류 선택
   - 소분류 선택 (검색 가능 드롭다운, 없으면 새로 생성)
@@ -117,7 +137,7 @@
 - **URL**: `/login`, `/signup`
 - **내용**: 소셜 로그인 (Google, GitHub 등) + 이메일/비밀번호
 
-## 4. 사용자 권한 모델
+## 5. 사용자 권한 모델
 
 | 기능 | 비로그인 | 로그인 |
 |------|:-------:|:-----:|
@@ -132,7 +152,7 @@
 | 좋아요 / 댓글 | X | O |
 | 마이페이지 | X | O |
 
-## 5. 데이터 관계도
+## 6. 데이터 관계도
 
 ```
 categories (대분류)
@@ -174,227 +194,27 @@ users
     id, email, nickname, avatar_url, provider
 ```
 
-## 6. 사이트맵 (Mermaid)
-
-```mermaid
-graph TD
-    %% ── 글로벌 내비게이션 ──
-    NAV["🧭 탑 내비<br/>Logo · 검색 · + 토픽 만들기 · 로그인"]
-    SIDE["📂 사이드바<br/>대분류 › 소분류<br/>아코디언"]
-
-    NAV --> HOME
-    NAV --> CREATE_TOPIC
-    NAV --> LOGIN
-    SIDE --> SUB
-
-    %% ── 페이지 계층 ──
-    HOME["🏠 홈 /\n카테고리 그리드\n인기 토픽\n최근 토픽"]
-
-    SUB["📁 소분류 페이지\n/{대분류}/{소분류}\n\n공유 아이템 풀 미리보기\n토픽 목록\n아이템 추가/편집"]
-
-    TOPIC["📋 토픽 상세\n/{대분류}/{소분류}/{토픽}\n\n아이템 목록\n내 티어 만들기 버튼\n티어리스트 피드\n정렬: 인기순 · 최신순"]
-
-    EDITOR["🎯 티어 에디터\n/.../create\n\nS/A/B/C/D/F 행\n드래그 앤 드롭\n저장 · 이미지 내보내기\n비로그인→로그인 유도"]
-
-    TIER_VIEW["👀 티어리스트 상세\n/.../tier/{id}\n\n완성 티어 보기\n좋아요 · 댓글\nURL/이미지 공유"]
-
-    CREATE_TOPIC["✏️ 토픽 만들기\n/create\n\n대분류 선택\n소분류 선택/생성\n제목 입력\n아이템 풀에서 선택"]
-
-    LOGIN["🔐 로그인\n/login\n\n소셜 로그인\n이메일/비밀번호"]
-
-    MYPAGE["👤 마이페이지\n/mypage\n\n내 티어리스트\n내 토픽\n좋아요 목록\n프로필 설정"]
-
-    %% ── 연결 ──
-    HOME --> SUB
-    SUB --> TOPIC
-    SUB -->|아이템 추가/편집| ITEM_POOL
-    TOPIC --> EDITOR
-    TOPIC --> TIER_VIEW
-    EDITOR -->|저장| TIER_VIEW
-    LOGIN --> MYPAGE
-
-    %% ── 공유 아이템 풀 ──
-    ITEM_POOL["📦 공유 아이템 풀\n\n소분류에 귀속\n누구나 추가/이미지 교체\n히스토리 보존"]
-
-    ITEM_POOL -.->|아이템 참조| TOPIC
-    ITEM_POOL -.->|아이템 참조| CREATE_TOPIC
-
-    %% ── 스타일 ──
-    classDef nav fill:#1e293b,stroke:#475569,color:#f8fafc
-    classDef page fill:#0f172a,stroke:#334155,color:#e2e8f0
-    classDef action fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
-    classDef data fill:#1a2e1a,stroke:#22c55e,color:#bbf7d0
-
-    class NAV,SIDE nav
-    class HOME,SUB,TOPIC,TIER_VIEW,LOGIN,MYPAGE page
-    class EDITOR,CREATE_TOPIC action
-    class ITEM_POOL data
-```
-
-## 7. 핵심 사용자 흐름 (Mermaid)
+## 7. 핵심 사용자 흐름
 
 ### 흐름 1: 기존 토픽으로 티어 만들기
-
-```mermaid
-flowchart LR
-    A["홈"] --> B["사이드바에서\n소분류 선택"]
-    B --> C["토픽 선택"]
-    C --> D["내 티어 만들기"]
-    D --> E["드래그앤드롭\n배치"]
-    E --> F{로그인 상태?}
-    F -->|Yes| G["저장 완료"]
-    F -->|No| H["로그인 유도"]
-    H --> G
+```
+홈 → 티어메이커 → 사이드바에서 소분류 선택 → 토픽 선택 → [내 티어 만들기]
+→ 드래그앤드롭으로 배치 → [저장] → (비로그인 시 로그인 유도) → 완료
 ```
 
 ### 흐름 2: 새 토픽 만들기
-
-```mermaid
-flowchart LR
-    A["+ 토픽 만들기"] --> B["대분류 선택"]
-    B --> C["소분류 선택"]
-    C --> D{소분류 존재?}
-    D -->|Yes| F["제목 입력"]
-    D -->|No| E["소분류 새로 생성"]
-    E --> F
-    F --> G["아이템 풀에서 선택"]
-    G --> H{필요한 아이템\n없음?}
-    H -->|Yes| I["아이템 바로 추가\n풀에도 반영"]
-    I --> G
-    H -->|No| J["토픽 완성"]
+```
+탑 내비 [+ 토픽 만들기] → 대분류 선택 → 소분류 선택 (없으면 새로 생성)
+→ 제목 입력 → 아이템 풀에서 선택 (없으면 바로 추가) → 완료
 ```
 
-### 흐름 3: 아이템 기여
-
-```mermaid
-flowchart LR
-    A["소분류 페이지"] --> B["아이템 추가/편집"]
-    B --> C{추가 or 교체?}
-    C -->|추가| D["새 아이템 이름\n+ 이미지 업로드"]
-    C -->|교체| E["기존 아이템 선택\n→ 새 이미지 업로드"]
-    D --> F["풀에 반영"]
-    E --> F
+### 흐름 3: 아이템 기여하기
+```
+소분류 페이지 → [아이템 추가/편집] → 새 아이템 추가 or 기존 이미지 교체
 ```
 
 ### 흐름 4: 다른 사람 티어 탐색
-
-```mermaid
-flowchart LR
-    A["홈"] --> B["인기 토픽 클릭"]
-    B --> C["티어리스트 피드\n인기순/최신순"]
-    C --> D["티어 상세 보기"]
-    D --> E["좋아요 / 댓글"]
 ```
-
-## 8. 데이터 관계도 (Mermaid ERD)
-
-```mermaid
-erDiagram
-    categories ||--o{ subcategories : "has"
-    subcategories ||--o{ subcategory_aliases : "has"
-    subcategories ||--o{ items : "owns (shared pool)"
-    subcategories ||--o{ topics : "has"
-    items ||--o{ item_image_history : "tracks"
-    topics ||--o{ topic_items : "selects"
-    items ||--o{ topic_items : "referenced by"
-    topics ||--o{ tier_lists : "has many"
-    tier_lists ||--o{ tier_rankings : "contains"
-    items ||--o{ tier_rankings : "placed in"
-    tier_lists ||--o{ likes : "receives"
-    tier_lists ||--o{ comments : "receives"
-    users ||--o{ tier_lists : "creates"
-    users ||--o{ topics : "creates"
-    users ||--o{ items : "contributes"
-    users ||--o{ likes : "gives"
-    users ||--o{ comments : "writes"
-
-    categories {
-        uuid id PK
-        string name
-        string slug
-        string icon
-        int sort_order
-    }
-
-    subcategories {
-        uuid id PK
-        uuid category_id FK
-        string name
-        string slug
-        string normalized_name
-        uuid created_by FK
-    }
-
-    subcategory_aliases {
-        uuid id PK
-        uuid subcategory_id FK
-        string alias
-        string normalized_alias
-    }
-
-    items {
-        uuid id PK
-        uuid subcategory_id FK
-        string name
-        string image_url
-        uuid created_by FK
-    }
-
-    item_image_history {
-        uuid id PK
-        uuid item_id FK
-        string image_url
-        uuid changed_by FK
-        timestamp changed_at
-    }
-
-    topics {
-        uuid id PK
-        uuid subcategory_id FK
-        string title
-        string slug
-        string description
-        uuid created_by FK
-    }
-
-    topic_items {
-        uuid topic_id FK
-        uuid item_id FK
-    }
-
-    tier_lists {
-        uuid id PK
-        uuid topic_id FK
-        uuid user_id FK
-        timestamp created_at
-    }
-
-    tier_rankings {
-        uuid id PK
-        uuid tier_list_id FK
-        uuid item_id FK
-        string tier
-        int position
-    }
-
-    likes {
-        uuid user_id FK
-        uuid tier_list_id FK
-    }
-
-    comments {
-        uuid id PK
-        uuid tier_list_id FK
-        uuid user_id FK
-        text content
-        timestamp created_at
-    }
-
-    users {
-        uuid id PK
-        string email
-        string nickname
-        string avatar_url
-        string provider
-    }
+홈 → 인기 토픽 클릭 → 티어리스트 피드 (인기순/최신순) → 상세 보기
+→ 좋아요/댓글
 ```
