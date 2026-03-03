@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, LogOut, User } from "lucide-react";
+import { Plus, LogOut, User, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SearchBar } from "./SearchBar";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -11,12 +11,23 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 export function TopNav() {
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
 
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
+      if (data.user) {
+        supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            setIsAdmin(profile?.is_admin ?? false);
+          });
+      }
     });
 
     const {
@@ -57,6 +68,14 @@ export function TopNav() {
 
         {user ? (
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-2 text-sm font-medium text-secondary-foreground hover:bg-accent"
+              >
+                <Shield className="h-4 w-4" />
+              </Link>
+            )}
             <Link
               href="/mypage"
               className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-2 text-sm font-medium text-secondary-foreground hover:bg-accent"
