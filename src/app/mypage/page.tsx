@@ -13,11 +13,25 @@ export default async function MyPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
+
+  if (!profile) {
+    const { data: newProfile } = await supabase
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        nickname:
+          user.user_metadata?.full_name || user.user_metadata?.name || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      }, { onConflict: "id" })
+      .select()
+      .single();
+    profile = newProfile;
+  }
 
   if (!profile) {
     redirect("/login");
