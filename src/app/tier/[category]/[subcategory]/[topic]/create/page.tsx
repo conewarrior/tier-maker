@@ -7,14 +7,32 @@ interface TierCreatePageProps {
 
 export default async function TierCreatePage({ params }: TierCreatePageProps) {
   const { category, subcategory, topic: topicSlug } = await params;
+  const categorySlug = decodeURIComponent(category);
+  const subcategorySlug = decodeURIComponent(subcategory);
+  const decodedTopicSlug = decodeURIComponent(topicSlug);
   const supabase = await createClient();
+
+  // Fetch category first
+  const { data: cat } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", categorySlug)
+    .single();
+
+  if (!cat) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-sm text-muted-foreground">페이지를 찾을 수 없습니다.</p>
+      </div>
+    );
+  }
 
   // Fetch subcategory
   const { data: sub } = await supabase
     .from("subcategories")
-    .select("id, categories!inner(slug)")
-    .eq("slug", subcategory)
-    .eq("categories.slug", category)
+    .select("id")
+    .eq("slug", subcategorySlug)
+    .eq("category_id", cat.id)
     .single();
 
   if (!sub) {
@@ -30,7 +48,7 @@ export default async function TierCreatePage({ params }: TierCreatePageProps) {
     .from("topics")
     .select("*")
     .eq("subcategory_id", sub.id)
-    .eq("slug", topicSlug)
+    .eq("slug", decodedTopicSlug)
     .single();
 
   if (!topic) {
