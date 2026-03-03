@@ -6,9 +6,10 @@ import { DEFAULT_TIER_ROWS } from "@/lib/constants";
 interface TierListPreviewProps {
   tierList: TierListWithRankings;
   href: string;
+  topicTitle?: string;
 }
 
-export function TierListPreview({ tierList, href }: TierListPreviewProps) {
+export function TierListPreview({ tierList, href, topicTitle }: TierListPreviewProps) {
   // Group rankings by tier
   const tierGroups: Record<string, typeof tierList.rankings> = {};
   for (const ranking of tierList.rankings) {
@@ -74,7 +75,12 @@ export function TierListPreview({ tierList, href }: TierListPreviewProps) {
         )}
       </div>
 
-      {/* Author info */}
+      {/* Topic & Author info */}
+      {topicTitle && (
+        <div className="border-t border-border px-3 pt-1.5">
+          <span className="text-xs font-medium text-foreground">{topicTitle}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-1.5">
           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted">
