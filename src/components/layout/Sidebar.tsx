@@ -102,7 +102,10 @@ export function Sidebar() {
           {categories.map((cat) => {
             const Icon = CATEGORY_ICONS[cat.slug] ?? Package;
             const isExpanded = expandedSlugs.has(cat.slug);
-            const isActive = pathname.startsWith(`/tier/${cat.slug}`);
+            const catPath = `/tier/${cat.slug}`;
+            const isInCategory = pathname.startsWith(catPath);
+            // 소분류 경로에 있으면 대분류는 하이라이트하지 않음
+            const isActive = isInCategory && pathname === catPath;
 
             return (
               <div key={cat.id}>
@@ -125,7 +128,7 @@ export function Sidebar() {
                   />
                 </button>
 
-                {isExpanded && cat.subcategories.length > 0 && (
+                {(isExpanded || isInCategory) && cat.subcategories.length > 0 && (
                   <div className="ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
                     {cat.subcategories.map((sub) => (
                       <Link
@@ -133,7 +136,7 @@ export function Sidebar() {
                         href={`/tier/${cat.slug}/${sub.slug}`}
                         className={cn(
                           "rounded-md px-3 py-1.5 text-sm transition-colors",
-                          pathname === `/tier/${cat.slug}/${sub.slug}`
+                          pathname.startsWith(`/tier/${cat.slug}/${sub.slug}`)
                             ? "bg-accent font-medium text-accent-foreground"
                             : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         )}
