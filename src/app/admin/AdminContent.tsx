@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Trash2, Plus, Loader2, Pencil, Check, X } from "lucide-react";
+import { Trash2, Plus, Loader2, Pencil, Check, X, ArrowRightLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -24,6 +24,8 @@ import {
   deleteItem,
   createCategory,
   updateCategory,
+  createAdminSubcategory,
+  moveSubcategory,
 } from "@/app/actions/admin";
 
 type Category = {
@@ -38,6 +40,7 @@ type Subcategory = {
   id: string;
   name: string;
   slug: string;
+  category_id: string;
   category_name: string;
   item_count: number;
   topic_count: number;
@@ -80,6 +83,14 @@ export function AdminContent() {
   const [newOrder, setNewOrder] = useState(0);
   const [saving, setSaving] = useState(false);
 
+  // Subcategory add/move state
+  const [addingSub, setAddingSub] = useState(false);
+  const [newSubName, setNewSubName] = useState("");
+  const [newSubSlug, setNewSubSlug] = useState("");
+  const [newSubCategoryId, setNewSubCategoryId] = useState("");
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [moveCategoryId, setMoveCategoryId] = useState("");
+
   const loadTab = useCallback(
     async (tab: string) => {
       setLoading(true);
@@ -90,8 +101,12 @@ export function AdminContent() {
           break;
         }
         case "subcategories": {
-          const res = await getAdminSubcategories();
-          if (res.data) setSubcategories(res.data);
+          const [subRes, catRes] = await Promise.all([
+            getAdminSubcategories(),
+            getAdminCategories(),
+          ]);
+          if (subRes.data) setSubcategories(subRes.data);
+          if (catRes.data) setCategories(catRes.data);
           break;
         }
         case "topics": {
@@ -179,6 +194,39 @@ export function AdminContent() {
       setNewSlug("");
       setNewOrder(0);
       await loadTab("categories");
+    }
+    setSaving(false);
+  };
+
+  const handleAddSub = async () => {
+    if (!newSubName.trim() || !newSubSlug.trim() || !newSubCategoryId) return;
+    setSaving(true);
+    const result = await createAdminSubcategory({
+      categoryId: newSubCategoryId,
+      name: newSubName.trim(),
+      slug: newSubSlug.trim(),
+    });
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setAddingSub(false);
+      setNewSubName("");
+      setNewSubSlug("");
+      setNewSubCategoryId("");
+      await loadTab("subcategories");
+    }
+    setSaving(false);
+  };
+
+  const handleMove = async (subcategoryId: string, targetCategoryId: string) => {
+    setSaving(true);
+    const result = await moveSubcategory(subcategoryId, targetCategoryId);
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setMovingId(null);
+      setMoveCategoryId("");
+      await loadTab("subcategories");
     }
     setSaving(false);
   };
@@ -381,23 +429,137 @@ export function AdminContent() {
 
           {/* Subcategories */}
           <TabsContent value="subcategories">
+            <div className="mb-3 flex justify-end">
+              {!addingSub && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddingSub(true)}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  소분류 추가
+                </Button>
+              )}
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>이름</TableHead>
+                  <TableHead>slug</TableHead>
                   <TableHead>카테고리</TableHead>
                   <TableHead>아이템</TableHead>
                   <TableHead>토픽</TableHead>
                   <TableHead>생성일</TableHead>
-                  <TableHead className="w-[60px]">삭제</TableHead>
+                  <TableHead className="w-[100px]">작업</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {addingSub && (
+                  <TableRow>
+                    <TableCell>
+                      <input
+                        type="text"
+                        value={newSubName}
+                        onChange={(e) => setNewSubName(e.target.value)}
+                        placeholder="이름"
+                        className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <input
+                        type="text"
+                        value={newSubSlug}
+                        onChange={(e) => setNewSubSlug(e.target.value)}
+                        placeholder="slug"
+                        className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        value={newSubCategoryId}
+                        onChange={(e) => setNewSubCategoryId(e.target.value)}
+                        className="rounded border border-border bg-background px-2 py-1 text-sm"
+                      >
+                        <option value="">선택</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={handleAddSub}
+                          disabled={saving}
+                        >
+                          <Check className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => setAddingSub(false)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
                 {subcategories.map((sub) => (
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">{sub.name}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{sub.category_name}</Badge>
+                      <code className="text-xs">{sub.slug}</code>
+                    </TableCell>
+                    <TableCell>
+                      {movingId === sub.id ? (
+                        <div className="flex items-center gap-1">
+                          <select
+                            value={moveCategoryId}
+                            onChange={(e) => setMoveCategoryId(e.target.value)}
+                            className="rounded border border-border bg-background px-2 py-1 text-sm"
+                          >
+                            <option value="">이동할 대분류</option>
+                            {categories
+                              .filter((cat) => cat.id !== sub.category_id)
+                              .map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </option>
+                              ))}
+                          </select>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() =>
+                              moveCategoryId &&
+                              handleMove(sub.id, moveCategoryId)
+                            }
+                            disabled={saving || !moveCategoryId}
+                          >
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => {
+                              setMovingId(null);
+                              setMoveCategoryId("");
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge variant="outline">{sub.category_name}</Badge>
+                      )}
                     </TableCell>
                     <TableCell>{sub.item_count}</TableCell>
                     <TableCell>{sub.topic_count}</TableCell>
@@ -405,22 +567,34 @@ export function AdminContent() {
                       {formatDate(sub.created_at)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() =>
-                          handleDelete("subcategory", sub.id, sub.name)
-                        }
-                        disabled={deleting === sub.id}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => {
+                            setMovingId(sub.id);
+                            setMoveCategoryId("");
+                          }}
+                        >
+                          <ArrowRightLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() =>
+                            handleDelete("subcategory", sub.id, sub.name)
+                          }
+                          disabled={deleting === sub.id}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
                 {subcategories.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                       소분류가 없습니다.
                     </TableCell>
                   </TableRow>

@@ -154,6 +154,7 @@ export async function getAdminSubcategories(): Promise<
       id: string;
       name: string;
       slug: string;
+      category_id: string;
       category_name: string;
       item_count: number;
       topic_count: number;
@@ -185,6 +186,7 @@ export async function getAdminSubcategories(): Promise<
     id: sub.id,
     name: sub.name,
     slug: sub.slug,
+    category_id: sub.category_id,
     category_name: catMap.get(sub.category_id) ?? "",
     item_count: (items ?? []).filter((i) => i.subcategory_id === sub.id).length,
     topic_count: (topics ?? []).filter((t) => t.subcategory_id === sub.id)
@@ -193,6 +195,45 @@ export async function getAdminSubcategories(): Promise<
   }));
 
   return { data: result, error: null };
+}
+
+export async function createAdminSubcategory(data: {
+  categoryId: string;
+  name: string;
+  slug: string;
+}): Promise<ActionResult<{ id: string }>> {
+  const { supabase, error } = await requireAdmin();
+  if (!supabase) return { data: null, error: error! };
+
+  const { data: sub, error: insertErr } = await supabase
+    .from("subcategories")
+    .insert({
+      category_id: data.categoryId,
+      name: data.name,
+      slug: data.slug,
+      normalized_name: data.name.toLowerCase().replace(/\s/g, ""),
+    })
+    .select("id")
+    .single();
+
+  if (insertErr) return { data: null, error: insertErr.message };
+  return { data: sub, error: null };
+}
+
+export async function moveSubcategory(
+  subcategoryId: string,
+  targetCategoryId: string
+): Promise<ActionResult<null>> {
+  const { supabase, error } = await requireAdmin();
+  if (!supabase) return { data: null, error: error! };
+
+  const { error: updateErr } = await supabase
+    .from("subcategories")
+    .update({ category_id: targetCategoryId })
+    .eq("id", subcategoryId);
+
+  if (updateErr) return { data: null, error: updateErr.message };
+  return { data: null, error: null };
 }
 
 export async function deleteSubcategory(
