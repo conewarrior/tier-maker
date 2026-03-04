@@ -5,6 +5,7 @@ import { getItems } from "@/app/actions/item";
 import { getTopicsBySubcategory } from "@/app/actions/topic";
 import { ItemGrid } from "@/components/item/ItemGrid";
 import { TopicCard } from "@/components/topic/TopicCard";
+import { SubcategoryBanner } from "@/components/subcategory/SubcategoryBanner";
 
 interface SubcategoryPageProps {
   params: Promise<{ category: string; subcategory: string }>;
@@ -63,6 +64,13 @@ export default async function SubcategoryPage({ params }: SubcategoryPageProps) 
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
+      {/* Banner */}
+      <SubcategoryBanner
+        subcategoryId={sub.id}
+        bannerImageUrl={sub.banner_image_url}
+        isLoggedIn={isLoggedIn}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

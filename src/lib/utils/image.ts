@@ -3,6 +3,42 @@
  */
 
 const MAX_SIZE = 200;
+const BANNER_MAX_WIDTH = 1200;
+const BANNER_MAX_HEIGHT = 400;
+
+export async function resizeBannerToWebP(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+
+  let width = bitmap.width;
+  let height = bitmap.height;
+
+  if (width > BANNER_MAX_WIDTH) {
+    height = Math.round((height / width) * BANNER_MAX_WIDTH);
+    width = BANNER_MAX_WIDTH;
+  }
+  if (height > BANNER_MAX_HEIGHT) {
+    width = Math.round((width / height) * BANNER_MAX_HEIGHT);
+    height = BANNER_MAX_HEIGHT;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("WebP 변환 실패"))),
+      "image/webp",
+      0.85
+    );
+  });
+
+  return new File([blob], "banner.webp", { type: "image/webp" });
+}
 
 export async function resizeAndConvertToWebP(file: File): Promise<File> {
   const bitmap = await createImageBitmap(file);

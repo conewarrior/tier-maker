@@ -106,3 +106,46 @@ export async function createSubcategory(data: {
 
   return { data: subcategory, error: null };
 }
+
+export async function updateSubcategoryBanner(
+  subcategoryId: string,
+  imageFile: File
+): Promise<ActionResult<{ banner_image_url: string }>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { data: null, error: "로그인이 필요합니다." };
+  }
+
+  const timestamp = Date.now();
+  const filePath = `${subcategoryId}/${timestamp}.webp`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("banners")
+    .upload(filePath, imageFile, {
+      contentType: "image/webp",
+    });
+
+  if (uploadError) {
+    return { data: null, error: uploadError.message };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("banners").getPublicUrl(filePath);
+
+  const { error: updateError } = await supabase
+    .from("subcategories")
+    .update({ banner_image_url: publicUrl })
+    .eq("id", subcategoryId);
+
+  if (updateError) {
+    return { data: null, error: updateError.message };
+  }
+
+  return { data: { banner_image_url: publicUrl }, error: null };
+}
