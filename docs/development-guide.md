@@ -411,6 +411,125 @@ Supabase Storage 버킷: items
 17. 플랫폼 홈 랜딩 페이지
 ```
 
+### Phase 4: 소분류 개선 & 소셜 강화 & 버전 관리
+
+#### 마이그레이션 (Phase 4)
+
+```sql
+-- 1. 댓글 쓰레드화: parent_comment_id 추가
+ALTER TABLE public.comments
+  ADD COLUMN parent_comment_id uuid REFERENCES public.comments ON DELETE CASCADE;
+
+CREATE INDEX idx_comments_parent ON public.comments (parent_comment_id)
+  WHERE parent_comment_id IS NOT NULL;
+
+-- 2. 티어리스트 버전 관리
+CREATE TABLE public.tier_list_versions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  tier_list_id uuid REFERENCES public.tier_lists ON DELETE CASCADE NOT NULL,
+  version int NOT NULL,
+  rankings jsonb NOT NULL,  -- snapshot: [{ item_id, tier, position }]
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.tier_lists ADD COLUMN version int NOT NULL DEFAULT 1;
+ALTER TABLE public.tier_lists ADD COLUMN updated_at timestamptz DEFAULT now();
+
+-- RLS
+ALTER TABLE public.tier_list_versions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read" ON public.tier_list_versions FOR SELECT USING (true);
+CREATE POLICY "Auth insert" ON public.tier_list_versions FOR INSERT WITH CHECK (
+  EXISTS (SELECT 1 FROM public.tier_lists WHERE id = tier_list_id AND user_id = auth.uid())
+);
+CREATE POLICY "Owner update" ON public.tier_lists FOR UPDATE USING (auth.uid() = user_id);
+```
+
+#### Server Actions 추가/변경
+
+| 액션 | 파일 | 설명 |
+|------|------|------|
+| `getPopularTierListsBySubcategory(subcategoryId, limit)` | `tier.ts` | 소분류 내 전체 토픽에서 좋아요 상위 티어리스트 조회 |
+| `getTopicsBySubcategoryWithPreview(subcategoryId)` | `topic.ts` | 토픽 목록 + 각 토픽의 대표 티어리스트 미니 프리뷰 + 참여자 수 |
+| `getComments(tierListId)` | `social.ts` | parent_comment_id IS NULL 최상위 댓글 + 대댓글 함께 조회 |
+| `addComment(tierListId, content, parentCommentId?)` | `social.ts` | parentCommentId 파라미터 추가 (2 depth 제한 검증) |
+| `updateTierList(tierListId, newRankings)` | `tier.ts` | 기존 rankings → versions 스냅샷 → 새 rankings 저장 → version +1 |
+| `getTierListVersions(tierListId)` | `tier.ts` | 버전 이력 목록 조회 |
+| `getTierListVersion(tierListId, version)` | `tier.ts` | 특정 버전의 rankings 스냅샷 조회 |
+
+#### 작업 목록
+
+```
+18. 소분류 페이지 — 인기 티어리스트 하이라이트
+    - getPopularTierListsBySubcategory 서버 액션 추가 (tier.ts)
+      → subcategory → topics → tier_lists → likes 집계 → 상위 N개
+    - 소분류 페이지에 하이라이트 섹션 추가 (배너 아래, 아이템 풀 위)
+    - 기존 TierListPreview 컴포넌트 재사용
+    파일:
+      src/app/actions/tier.ts
+      src/app/tier/[category]/[subcategory]/page.tsx
+
+19. 토픽 카드 미니 프리뷰
+    - getTopicsBySubcategoryWithPreview 서버 액션 추가 (topic.ts)
+      → 토픽별 가장 인기 있는 티어리스트 1개 + 참여자 수(tier_list count)
+    - TopicCard에 미니 티어 프리뷰 (S/A/B 3줄) 추가
+    - "12명 참여" 형태의 참여자 수 표시
+    파일:
+      src/app/actions/topic.ts
+      src/components/topic/TopicCard.tsx
+      src/app/tier/[category]/[subcategory]/page.tsx
+
+20. 댓글 쓰레드화 — DB & 타입
+    - comments 테이블에 parent_comment_id 컬럼 추가 (마이그레이션)
+    - Comment 타입에 parent_comment_id 필드 추가
+    - CommentWithUser 타입에 replies 필드 추가
+    파일:
+      src/types/tier.ts
+
+21. 댓글 쓰레드화 — 서버 액션
+    - getComments 수정: 최상위 댓글 조회 후 대댓글 그룹핑
+    - addComment 수정: parentCommentId 파라미터 추가, 2 depth 제한 검증
+      → parent가 이미 대댓글이면 거부 (parent_comment_id가 NOT NULL인 댓글에 대댓글 불가)
+    파일:
+      src/app/actions/social.ts
+
+22. 댓글 쓰레드화 — UI
+    - CommentSection에 쓰레드 렌더링 (대댓글 들여쓰기)
+    - 각 댓글에 "답글" 버튼 추가
+    - 인라인 대댓글 입력 폼 (해당 댓글 아래 표시/숨김 토글)
+    파일:
+      src/components/social/CommentSection.tsx
+
+23. 티어리스트 버전 관리 — DB & 타입
+    - tier_list_versions 테이블 생성 (마이그레이션)
+    - tier_lists에 version, updated_at 컬럼 추가
+    - TierListVersion 타입 추가, TierList에 version/updated_at 필드 추가
+    파일:
+      src/types/tier.ts
+
+24. 티어리스트 버전 관리 — 서버 액션
+    - updateTierList: 기존 rankings 스냅샷 저장 → 새 rankings 교체 → version 증가
+    - getTierListVersions: 버전 이력 목록 (version, created_at)
+    - getTierListVersion: 특정 버전의 rankings jsonb 반환
+    파일:
+      src/app/actions/tier.ts
+
+25. 티어리스트 버전 관리 — 상세 페이지 UI
+    - 본인 티어리스트에 "수정하기" 버튼 표시
+    - "v3 · 수정 3회" 형태의 버전 정보 표시
+    - VersionHistory 컴포넌트: 버전 이력 드롭다운, 클릭 시 해당 버전 랭킹 표시
+    파일:
+      src/app/tier/[category]/[subcategory]/[topic]/[tierId]/page.tsx
+      src/components/tier/VersionHistory.tsx (신규)
+
+26. 티어리스트 수정 에디터
+    - 수정용 에디터 페이지 (기존 티어 에디터 재사용)
+    - 현재 rankings를 초기 tierState로 변환하여 전달
+    - 저장 시 saveTierList 대신 updateTierList 호출
+    파일:
+      src/app/tier/[category]/[subcategory]/[topic]/[tierId]/edit/page.tsx (신규)
+```
+
 ## 7. 개발 커맨드
 
 ```bash
