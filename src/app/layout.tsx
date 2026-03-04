@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { TopNav } from "@/components/layout/TopNav";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
+
+const ADSENSE_PUB_ID = process.env.NEXT_PUBLIC_ADSENSE_PUB_ID;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +30,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      {ADSENSE_PUB_ID && (
+        <head>
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${ADSENSE_PUB_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        </head>
+      )}
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
